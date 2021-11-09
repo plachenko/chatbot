@@ -1,0 +1,9 @@
+.env
+node_modules
+index_bak.js
+
+files/*/*
+!files/*/.gitkeep
+
+txt/*
+!txt/.gitkeep

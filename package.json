@@ -1,0 +1,29 @@
+{
+  "name": "twitch-chatbot",
+  "version": "0.0.1",
+  "description": "Twitch chatbot that parses, clips and plays audio and video commands.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "server": "nodemon ./src/server.js",
+    "audioTest": "nodemon audioParse.js"
+  },
+  "dependencies": {
+    "@suldashi/lame": "^1.2.5",
+    "dotenv": "^10.0.0",
+    "ffmpeg-static": "^4.4.0",
+    "robotjs": "^0.6.0",
+    "speaker": "^0.5.3",
+    "tmi.js": "^1.2.1",
+    "ws": "^8.2.3"
+  },
+  "engines": {
+    "node": "8.x"
+  },
+  "license": "MIT",
+  "keywords": [
+    "twitch",
+    "chatbots",
+    "irc"
+  ]
+}
