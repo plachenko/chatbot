@@ -1,19 +1,61 @@
 const WebSocket = require('ws');
 const WebSocketServer = WebSocket.WebSocketServer;
-const fs = require('fs');
+
+const io = require('./io');
+const audio = require('./audio');
+const wsClients = [];
+const bot = require('./bot');
 
 const wss = new WebSocketServer({
 	port: 6969,
 });
 
-exports.wss = wss;
+function heartbeat() {
+	this.isAlive = true;
+}
+  
+const interval = setInterval(function ping() {
+	wss.clients.forEach(function each(ws) {
+		if (ws.isAlive === false){
+			console.log('terminated');
+			return ws.terminate(); 
+		} 
+  
+		ws.isAlive = false;
+		ws.ping();
+	});
+}, 30000);
 
-wss.on('videoRequest', (data)=>{
-	console.log(data);
-});
+wss.on('connection', (ws, req) => {
+	let obs = req.url.slice(1) == 'true';
+	
+	wsClients.push({id: req.headers['sec-websocket-key'], client: ws, obs: obs});
 
-wss.on('connection', (ws) => {
+	ws.isAlive = true;
+	ws.on('pong', heartbeat);
+
+	if(!obs){
+		const obj = {
+			type: 'cmdBtns',
+			payload: io.audList
+		};
+		
+		ws.send(JSON.stringify(obj));
+	}
+
 	ws.on('message', (data, isBinary)=>{
+		const obj = JSON.parse(data.toString());
+		
+		if(obj.type == 'cmd'){
+			const cmd = obj.payload;
+			if(cmd == 'random'){
+				bot.rollCmd();
+				return;
+			}
+			audio.play(obj.payload);
+		}
+
+
 		wss.clients.forEach((client)=>{
             if (client.readyState === WebSocket.OPEN) {
                 client.send(data, { binary: isBinary });
@@ -21,3 +63,9 @@ wss.on('connection', (ws) => {
 		});
 	});
 });
+
+wss.on('close', (ws) => {
+	clearInterval(interval);
+});
+
+exports.wss = wss;

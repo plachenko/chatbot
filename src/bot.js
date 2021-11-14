@@ -1,16 +1,17 @@
 const io = require('./io');
 const audio = require('./audio');
+const video = require('./video');
 const extra = require('./extras');
-
-// const WebSocket = require('ws');
-// const ws = new WebSocket('ws://localhost:6969');
+// const obs = require('./obs');
+const socket = require('./websocket');
 
 const cmdTrigger = "!";
 let lastRolls = [];
 let users = [];
 let global = {
+  nocmd: false,
   silent: false,
-  streakMode: false,
+  streakmode: false,
   noviz: false,
   verbose: true,
   cmds: []
@@ -19,10 +20,30 @@ let cmdArr = [];
 
 exports.cmdTrigger = cmdTrigger;
 exports.channel = '';
-// exports.silence = false;
+
+process.on('uncaughtException', (err)=>{
+  console.log(err);
+});
+
+
+function sendCmdBtns(){
+  const obj = {
+    type: 'cmdBtns',
+    payload: io.audList
+  };
+
+  socket.ws.send(JSON.stringify(obj));
+}
 
 // On bot start
 exports.start = () => {
+  
+  socket.connectWS();
+
+  socket.ws.addEventListener('open', ()=>{
+    sendCmdBtns();
+  });  
+
   const userBuf = io.readTxtFile('users');
   const globBuf = io.readTxtFile('global');
   const cmdBuf = io.readTxtFile('commands');
@@ -47,7 +68,9 @@ exports.raidEvt= (usr) => {
   const usrIdx = checkUser(usr);
   const evt = users[usrIdx].events.raid;
 
-  extra.play(evt);
+  setTimeout(()=>{
+    extra.play(evt);
+  },3000);
 }
 
 // Process a bot command
@@ -56,12 +79,11 @@ exports.cmd = (msg, usr) => {
   const usrIdx = checkUser(usr.username);
   const memer = (users[usrIdx].privlages.indexOf('memer') >= 0);
   const muted = (users[usrIdx].privlages.indexOf('muted') >= 0);
-  let shortcut = false;
   const globalCmd = global.cmds.find(el => -1 < msg.split(' ').indexOf(el.name));
+  let shortcut = false;
   let ret = false;
 
-
-  if(!admin && muted) return;
+  if(!admin && (muted || global.nocmd)) return;
 
   if(users[usrIdx].shortcuts.length){
     shortcut = users[usrIdx].shortcuts.find(el => -1 < msg.split(' ').indexOf(el.name));
@@ -132,6 +154,15 @@ exports.cmd = (msg, usr) => {
     case 'c':
       ret = showCommands(args);
       break;
+    case 'h':
+      ret = showHelp();
+      break;
+    case 't':
+      testVid();
+      break;
+    case 'barrelroll':
+      barrelRoll();
+      break;
     case 'tts':
       sendTTS(msg);
       break;
@@ -148,22 +179,12 @@ exports.cmd = (msg, usr) => {
         case 'priv':
           ret = setPrivlages(args);
           break;
-        case 'streak':
-          global.streakMode = !global.streakMode;
-          ret = `streakmode: ${global.streakMode}`;
-          break;
-        case 'silent':
-          global.silent = !global.silent;
-          ret = `silent: ${global.silent}`;
-          break;
-        case 'noviz':
-          global.noviz = !global.noviz;
-          ret = `noviz: ${global.noviz}`;
-          break;
-        case 'verbose':
-          global.verbose = !global.verbose;
-          ret = `verbose: ${global.verbose}`;
-          break;
+      }
+
+      // Check the global object
+      if(!ret && global[cmd] !== undefined){
+        global[cmd] = !global[cmd];
+        ret = `${cmd}: ${global[cmd]}`;
       }
     }
 
@@ -196,7 +217,7 @@ exports.cmd = (msg, usr) => {
 
   if(!ret){
     // check if a command has a root and multiple other commands associated with it.
-    const commandFilter = io.fileList.filter(file => {
+    const commandFilter = io.audList.filter(file => {
       const split = file.split(cmd);
 
       if(!split[0].length && split[1].match(/^\d+$/g)){
@@ -207,7 +228,7 @@ exports.cmd = (msg, usr) => {
     });
 
     // Play an audio command.
-    if(io.fileList.includes(cmd) || commandFilter.length){
+    if(io.audList.includes(cmd) || commandFilter.length){
       let audioCmd = cmd;
       
       if(commandFilter.length && !cmd.match(/\d+/g)){
@@ -232,6 +253,15 @@ exports.cmd = (msg, usr) => {
 /* -- Commands -- */
 function sendTTS(){
   console.log('sending TTS');
+}
+
+function barrelRoll(){
+  const obj = {
+    type: 'msg',
+    payload: 'barrelRoll'
+  }
+
+  socket.ws.send(JSON.stringify(obj));
 }
 
 function setPrivlages(args){
@@ -312,6 +342,11 @@ function removeShortcut(shortcuts, args){
   return ret;
 }
 
+function testVid(){
+  video.sendVid();
+  // obs.playVid();
+}
+
 function checkShortcuts(shortcuts, args){
   let ret = false;
   const shortcut = shortcuts.find(el => args[0] == el.name);
@@ -342,18 +377,31 @@ function checkShortcuts(shortcuts, args){
   return ret;
 }
 
-function roll(user){
+exports.rollCmd = () => roll();
+function roll(user = ''){
   const maxRand = 5;
 
-  lastRolls.push(rand(io.fileList.length-1))
+  lastRolls.push(rand(io.audList.length-1))
   lastRolls = lastRolls.slice(maxRand * -1);
 
   const num = lastRolls[lastRolls.length - 1];
-  const file = io.fileList[num];
+  const file = io.audList[num];
 
   play(file, user);
 
   return `You rolled a ${num} - ${cmdTrigger}${file}`;
+}
+
+function showHelp(){
+  let ret = `This bot has a few options like aliasing multiple commands to a label (like an emote or a text phrase). \n
+    use '${cmdTrigger}[command] [label/emote]' \n
+    You can play last command with '${cmdTrigger}!' \n 
+    remove aliases with '${cmdTrigger}- [label]' \n
+    check commands listed with a label with '${cmdTrigger}?'
+    Commands can be listed with ${cmdTrigger}c
+    source code for backend is available here: https://www.github.com/plachenko/chatbot
+    source code for frontend is available here: https://www.github.com/plachenko/streamFrontend`;
+  return ret;
 }
 
 function showCommands(args = []){
@@ -361,11 +409,11 @@ function showCommands(args = []){
 
   /*
   if(args[0] == 'text'){
-      ret = `${io.fileList.length} commands - ${cmdTrigger}${io.fileList.join(' ' + cmdTrigger)}`;
+      ret = `${io.audList.length} commands - ${cmdTrigger}${io.audList.join(' ' + cmdTrigger)}`;
   }
   */
 
-  ret = `${io.fileList.length} commands - ${cmdTrigger}${io.fileList.join(' ' + cmdTrigger)}`;
+  ret = `${io.audList.length} commands - ${cmdTrigger}${io.audList.join(' ' + cmdTrigger)}`;
 
   /*
   const obj = {
@@ -399,15 +447,18 @@ function addShortcut(file, user, shortcut){
 function play(file, user, shortcut = ''){
     audio.play(file);
 
-    const checkIdx = users.findIndex((e) => {
-      return e.name == user;
-    });
-
-    if(shortcut.length){
-      addShortcut(file, users[checkIdx], shortcut)
+    if(user.length){
+      let checkIdx = users.findIndex((e) => {
+        return e.name.toLowerCase() == user.toLowerCase();
+      });
+  
+      if(shortcut.length){
+        addShortcut(file, users[checkIdx], shortcut)
+      }
+  
+      users[checkIdx].lastCmd = file;
     }
 
-    users[checkIdx].lastCmd = file;
 
     console.log(`* Playing Audio ${file} command`);
 }

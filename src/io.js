@@ -6,8 +6,16 @@ const baseDir = `${__dirname}/..`;
 const txtDir = `${baseDir}/txt`;
 const fileDir = `${baseDir}/files`;
 
-let files = fs.readdirSync(`${fileDir}/audio/`);
-exports.fileList = parseFileDir(files);
+exports.dir = fileDir;
+
+let audio = fs.readdirSync(`${fileDir}/audio/`);
+exports.audList = parseFileDir(audio);
+
+let video = fs.readdirSync(`${fileDir}/video/`);
+exports.vidList = parseFileDir(video);
+
+let refs = fs.readdirSync(`${fileDir}/_reference/`);
+exports.refList = parseFileDir(refs);
 
 let secrets = fs.readdirSync(`${fileDir}/_TOPsecret/`);
 exports.secretList = parseFileDir(secrets);
@@ -110,7 +118,7 @@ function secConv(time1, time2){
 exports.check = (name, unlisted = false) =>{
     // resetList();
 
-    exists = unlisted ? this.secretList.indexOf(`${name}`) : this.fileList.indexOf(`${name}`);
+    exists = unlisted ? this.secretList.indexOf(`${name}`) : this.audList.indexOf(`${name}`);
     if(exists >= 0){ 
         return true;
     }
@@ -118,7 +126,7 @@ exports.check = (name, unlisted = false) =>{
 }
 
 exports.download = (yturl, cmd, range = []) => {
-    let exists = files.includes(yturl+'.mp4');
+    let exists = audio.includes(yturl+'.mp4');
     const url = `https://www.youtube.com/watch?v=${yturl}`;
     const out = `${fileDir}/_reference/${yturl}.mp4`;
 

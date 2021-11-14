@@ -14,14 +14,14 @@ exports.play = (label) => {
     case 'fbi':
       fbi();
       break;
-    case 'grunty':
-      grunty();
-      break;
   }
 }
 
 function grunty(){
-  audio.play('grunt');
+  audio.play('signskit1', true);
+  setTimeout(()=>{
+    audio.play('grunt');
+  }, 1000);
 }
 
 function fbi(){

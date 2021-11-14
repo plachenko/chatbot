@@ -1,10 +1,7 @@
 const fs = require('fs');
 const Speaker = require('speaker');
 const lame = require("@suldashi/lame");
-const path = require('path');
 const io = require('./io');
-
-// let files = fs.readdirSync(`${__dirname}/_reference/`);
 
 let stream;
 
@@ -30,28 +27,6 @@ exports.play = (name, unlisted = false, stopTime) => {
 
 exports.stop = (killSound) => {
     stop(killSound);
-}
-
-exports.volume = (volumeNum, inp) => {
-    console.log(check(inp), inp);
-    if(check(inp)) {
-        const ol = path.join(`${__dirname}/audio/${inp}.mp3`);
-
-        let vol = +volumeNum[0] ? 'volume=0.'+volumeNum[0] : '1.0';
-        const cmd = `${ffmpeg} -i ${ol} -filter:a "${vol}" ${ol}`;
-        console.log(cmd);
-
-        exec(cmd, (error, stdout, stderr) => {
-            if(error){
-                console.log(`exec error: ${error}`);
-                return;
-            }
-            console.log(stdout);
-        });
-
-        return true;
-    }
-    
 }
 
 function playRef(audioName){
