@@ -4,13 +4,14 @@ const lame = require("@suldashi/lame");
 const io = require('./io');
 
 let stream;
-
 let sounds = [];
-
 let speaker;
+let silent = false;
 
-let exists = false;
-
+exports.setSilent = () => {
+    silent = !silent;
+    return silent;
+}
 
 exports.play = (name, unlisted = false, stopTime) => {
     if(io.check(name, unlisted)) {
@@ -25,7 +26,7 @@ exports.play = (name, unlisted = false, stopTime) => {
     return false;
 };
 
-exports.stop = (killSound) => {
+exports.stop = (killSound = false) => {
     stop(killSound);
 }
 
@@ -45,6 +46,8 @@ function stop(killSound){
 }
 
 function play(audioName, unlisted = false){
+    if(silent) return false;
+
     let path = `${__dirname}/../files/audio/`;
 
     if(unlisted){

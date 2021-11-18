@@ -6,6 +6,8 @@ const audio = require('./audio');
 const wsClients = [];
 const bot = require('./bot');
 
+const video = require('./video');
+
 const wss = new WebSocketServer({
 	port: 6969,
 });
@@ -48,13 +50,17 @@ wss.on('connection', (ws, req) => {
 		
 		if(obj.type == 'cmd'){
 			const cmd = obj.payload;
+			if(cmd == 'sendVid'){
+				video.sendVid();
+				return;
+			}
+
 			if(cmd == 'random'){
 				bot.rollCmd();
 				return;
 			}
 			audio.play(obj.payload);
 		}
-
 
 		wss.clients.forEach((client)=>{
             if (client.readyState === WebSocket.OPEN) {

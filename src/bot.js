@@ -18,6 +18,7 @@ let global = {
 };
 let cmdArr = [];
 
+
 exports.cmdTrigger = cmdTrigger;
 exports.channel = '';
 
@@ -38,7 +39,7 @@ function sendCmdBtns(){
 // On bot start
 exports.start = () => {
   
-  socket.connectWS();
+  // socket.connectWS();
 
   socket.ws.addEventListener('open', ()=>{
     sendCmdBtns();
@@ -178,6 +179,10 @@ exports.cmd = (msg, usr) => {
           break;
         case 'priv':
           ret = setPrivlages(args);
+          break;
+        case 'silent':
+          const silent = audio.setSilent();
+          ret = 'Silence is ' + (silent ? 'on' : 'off');
           break;
       }
 
@@ -532,7 +537,7 @@ function mov(msg, tags, type){
   }
   
   function unlist(msg, tags, type){
-    const params = msg.split(' '); 
+    const params = msg.split(' ');
     const name = params[1];
     let ret = false;
   
@@ -583,6 +588,18 @@ function mov(msg, tags, type){
     const start = params[3] || 0;
     const end = params[4] || 10;
     const instructions = params[5];
+
+    let cmdObj = {
+      name: name,
+      dateAdded: new Date(),
+      user: tags.username,
+      reference: ytLink,
+      video: false,
+      startTime: start,
+      length: end
+    };
+
+    cmds.push(cmdObj);
   
     if (params.length >= 5){
       const ytURL = audio.parseYTURL(ytLink);
