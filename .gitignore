@@ -1,6 +1,6 @@
 .env
 node_modules
-index_bak.js
+src/_bak/
 
 files/*/*
 !files/*/.gitkeep

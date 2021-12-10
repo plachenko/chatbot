@@ -14,7 +14,7 @@ const opts = {
     ]
 };
 
-bot.channel = opts.channels[0];
+// const channel = opts.channels[0];
 
 // Create a client with our options
 const client = new tmi.client(opts);
@@ -34,19 +34,29 @@ function onConnectedHandler (addr, port) {
 }
 
 // Called every time a message comes in
-function onMessageHandler (channel, user, msg, self) {
-    if(msg.length == 1 || self) return;
+async function onMessageHandler (channel, user, msg, self) {
+  if(msg.length == 1 || self) return;
 
-    const output = bot.cmd(msg, user);
+  user.admin = (user.username == opts.channels[0].slice(1));
 
-    if(output){
-        client.say(channel, output);
-    }
+  // Remove whitespace from chat message
+  const args = msg.slice(1).split(' ');
+  const cmd = args.shift().toLowerCase().trim();
+
+  const output = await bot.cmd(msg, user, cmd, args);
+
+  if(output){
+    client.say(channel, output);
+  }
 }
 
 // Called every time a raid comes in
-function onRaidHandler(chan, user, viewers){
-    bot.raidEvt(user);
+async function onRaidHandler(chan, user, viewers){
+  const output = await bot.raidEvt(user);
+
+  if(output){
+    client.say(channel, output);
+  }
 }
 
 /*-- Catch the exit event --*/
@@ -60,8 +70,12 @@ function exitHandler(options, exitCode) {
     if (options.exit){
         bot.end();
         process.exit();
-    } 
+    }
 }
+
+process.on('uncaughtException', (err)=>{
+  console.log(err);
+});
 
 //do something when app is closing
 process.on('exit', exitHandler.bind(null,{cleanup:true}));
