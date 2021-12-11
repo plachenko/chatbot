@@ -1,5 +1,6 @@
 const WebSocket = require('ws');
 const WebSocketServer = WebSocket.WebSocketServer;
+const { Readable } = require('stream');
 
 // const io = require('./io_bak');
 // const audio = require('./audio');
@@ -14,6 +15,25 @@ const wss = new WebSocketServer({
 
 function heartbeat() {
 	this.isAlive = true;
+}
+
+function bufferToStream(buffer){
+  let stream = new Readable();
+  stream.push(buffer);
+  stream.push(null);
+  return stream;
+}
+
+async function saveVideo(_blob){
+  const writeStream = fs.createWwriteStream('./vid/file.webm');
+
+  const blob = _blob;
+
+  const arrayBuffer = await blob.arrayBuffer();
+  const array = new Uint8Array(arrayBuffer);
+  const buffer = Buffer.from(array);
+  const readStream = bufferToStream(buffer);
+  readStream.pipe(writeStream);
 }
 
 const interval = setInterval(function ping() {
@@ -49,18 +69,13 @@ wss.on('connection', (ws, req) => {
 
 	ws.on('message', (data, isBinary)=>{
 		const obj = JSON.parse(data.toString());
+    console.log(obj);
 
 		if(obj.type == 'cmd'){
 			const cmd = obj.payload;
-			/*
-			if(cmd == 'bopenup'){
-				video.sendVid('bewmOpenUp', true);
-				setTimeout(()=>{
-					audio.play('bewmopen', true);
-				}, 500);
-				return;
-			}
-			*/
+      if(cmd == 'saveVid'){
+        // saveVideo();
+      }
 
 			if(cmd == 'sendVid'){
 				video.sendVid();
@@ -75,9 +90,9 @@ wss.on('connection', (ws, req) => {
 		}
 
 		wss.clients.forEach((client)=>{
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(data, { binary: isBinary });
-            }
+      if (client.readyState === WebSocket.OPEN) {
+        client.send(data, { binary: isBinary });
+      }
 		});
 	});
 });
