@@ -1,4 +1,5 @@
 const WebSocket = require('ws');
+const fs = require('fs');
 const WebSocketServer = WebSocket.WebSocketServer;
 const { Readable } = require('stream');
 
@@ -25,15 +26,21 @@ function bufferToStream(buffer){
 }
 
 async function saveVideo(_blob){
-  const writeStream = fs.createWwriteStream('./vid/file.webm');
+  const writeStream = fs.createWriteStream(`${__dirname}/file.webm`);
 
-  const blob = _blob;
+  // const blob = _blob;
 
-  const arrayBuffer = await blob.arrayBuffer();
-  const array = new Uint8Array(arrayBuffer);
-  const buffer = Buffer.from(array);
-  const readStream = bufferToStream(buffer);
+  // const arrayBuffer = await blob.arrayBuffer();
+  console.log(_blob.buffer);
+  const array = new Uint8Array(_blob.buffer);
+  const readStream = bufferToStream(array);
   readStream.pipe(writeStream);
+  return;
+  // const arrayBuffer = JSON.parse(_blob);
+  // const array = new Uint8Array(arrayBuffer);
+  // const buffer = Buffer.from(array);
+  // const readStream = bufferToStream(buffer);
+  // readStream.pipe(writeStream);
 }
 
 const interval = setInterval(function ping() {
@@ -68,8 +75,12 @@ wss.on('connection', (ws, req) => {
 	}
 
 	ws.on('message', (data, isBinary)=>{
-		const obj = JSON.parse(data.toString());
+    const obj = data;
+    console.log(isBinary);
     console.log(obj);
+    saveVideo(obj);
+    return;
+		// const obj = JSON.parse(data.toString());
 
 		if(obj.type == 'cmd'){
 			const cmd = obj.payload;
