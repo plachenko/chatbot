@@ -1,4 +1,3 @@
-const socket = require('./websocket');
 const user = require('./user');
 
 const admin = require('./commands/admin_cmds');
@@ -6,20 +5,39 @@ const api = require('./commands/api_cmds');
 const gen = require('./commands/gen_cmds');
 const io = require('./commands/io_cmds');
 const usr = require('./commands/usr_cmds');
+const game = require('./commands/game_cmds');
 
 const cmdArr = [];
 const reserved = [];
 const commands = {};
 
+const ws = require('./websocket');
+ws.connectWS();
+
 // General chat commands
 commands['chatCmds'] = {
+  'so': api.shoutout,
   'a': gen.roll,
   'c': gen.showCommands,
   'h': gen.showHelp,
-  'so': api.shoutout,
+  'discord': gen.showDiscord,
+  'addcmd': gen.addCmd,
   'tts': gen.sendTTS,
-  'barrelRoll': gen.barrelRoll
+  'barrelRoll': gen.barrelRoll,
+  'broke': gen.showBroke
 };
+
+commands['gameCmds'] = {
+  'radio': game.changeRadio,
+  'jack': game.jack,
+  'murk': game.murk,
+  'work': game.work,
+  'crouch': game.crouch,
+  'switch': game.switch,
+  'move': game.move,
+  'yes': game.yes,
+  'no': game.no
+}
 
 // Personalized user commands
 commands['usrCmds'] = {
@@ -72,6 +90,18 @@ exports.cmd = async (msg, usr, cmd, args) => {
 
   // const usrIdx = checkUser(usr.username);
   const privUsr = (usr.admin || usr.mod);
+
+  // honk.
+  if((/(h[o]{1,}nk)/g).test(cmd)){
+    let honks = cmd.match(/([o]{1,})/g);
+    return await game.sendHonk(honks);
+  }
+
+  // bang!
+  if((/(b[a]{1,}ng)/g).test(cmd)){
+    let bangs = cmd.match(/([a]{1,})/g);
+    return await game.banging(bangs);
+  }
 
   // Check the reserved commands.
   for(c in commands){

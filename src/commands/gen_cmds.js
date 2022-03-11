@@ -1,3 +1,14 @@
+/*
+const OBSWebSocket = require('obs-websocket-js');
+const obs = new OBSWebSocket();
+let connected = false;
+obs.connect({address: 'localhost:4444'}).then(() => {
+  connected = true;
+});
+*/
+
+// const socket = require('../websocket');
+
 let lastRolls = [];
 
 const cmdTrigger = "!";
@@ -7,7 +18,6 @@ exports.commandTrigger = cmdTrigger;
 exports.roll = () => {
   const maxRand = 5;
   const n = 100;
-
   let num = ~~(Math.random() * n);
   while (lastRolls.includes(num)) num = ~~(Math.random() * n);
 
@@ -33,6 +43,23 @@ exports.barrelRoll = () => {
 
 exports.sendTTS = (test) => {
   console.log('sending TTS',test);
+}
+
+exports.showDiscord = () => {
+  return 'Chill discord (moist lyfe) https://discord.gg/UbVt5PKZqH | Game Jamming / Making https://discord.gg/sKF2nTa3qk';
+}
+
+exports.showBroke = () => {
+  return 'plnrnd plz fix ur stuff! D:';
+}
+
+exports.showMon = (num) => {
+  if(!connected) return;
+  obs.send('SetCurrentScene', {
+    'scene-name': 'sceneMon'+num
+  }).catch(e => {
+      console.log('error',e);
+  });
 }
 
 exports.showHelp = () => {
@@ -73,3 +100,4 @@ exports.showCommands = (args = []) => {
 
   return ret;
 }
+

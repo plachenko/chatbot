@@ -3,15 +3,17 @@ const fs = require('fs');
 const WebSocketServer = WebSocket.WebSocketServer;
 const { Readable } = require('stream');
 
+const game = require('./commands/game_cmds');
+
 // const io = require('./io_bak');
-// const audio = require('./audio');
+const audio = require('./audio');
 const wsClients = [];
 const bot = require('./bot');
 
 const video = require('./_bak/video');
 
 const wss = new WebSocketServer({
-	port: 6969,
+	port: 6979,
 });
 
 function heartbeat() {
@@ -76,11 +78,24 @@ wss.on('connection', (ws, req) => {
 
 	ws.on('message', (data, isBinary)=>{
     const obj = data;
-    console.log(isBinary);
-    console.log(obj);
-    saveVideo(obj);
-    return;
-		// const obj = JSON.parse(data.toString());
+    // console.log(isBinary);
+    // console.log(obj);
+    // saveVideo(obj);
+    // return;
+		const objParse = JSON.parse(data.toString());
+
+    if(objParse.type == 'honk'){
+      const honking = objParse.payload;
+      if(honking){
+        game.starthonk();
+      } else {
+        game.endHonk();
+      }
+    }
+
+    if(objParse.type == 'counter'){
+      // audio.play('america');
+    }
 
 		if(obj.type == 'cmd'){
 			const cmd = obj.payload;

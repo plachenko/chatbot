@@ -10,11 +10,13 @@ const twitch_instance = axios.create({
 /* --- */
 
 exports.shoutout = async (userName) => {
-   const usrInfo = await getUserId(userName);
-   const usrChannelData = await getUsrInfo(usrInfo.id);
-   const {game_name, title} = usrChannelData;
+  const usrInfo = await getUserId(userName);
+  const usrChannelData = await getUsrInfo(usrInfo?.id);
+  const {game_name, title} = usrChannelData;
 
-   return`${userName} (https://www.twitch.tv/${userName}) was last seen under ${game_name} - "${title}"`
+  if(!usrInfo || !usrChannelData) return `No stream found.`;
+
+  return `${userName} (https://www.twitch.tv/${userName}) was last streaming ${game_name} - "${title}"`
 }
 
 async function getUserId(user){
@@ -23,7 +25,9 @@ async function getUserId(user){
     const data = d.data.data[0];
 
     return data;
-  })
+  }).catch(err => {
+    return false;
+  });
 }
 
 async function getUsrInfo(usrId){
@@ -32,5 +36,7 @@ async function getUsrInfo(usrId){
     const data = d.data.data[0];
 
     return data;
+  }).catch(err => {
+    return false;
   });
 }

@@ -55,7 +55,7 @@ async function onRaidHandler(chan, user, viewers){
   const output = await bot.raidEvt(user);
 
   if(output){
-    client.say(channel, output);
+    client.say(chan, output);
   }
 }
 
