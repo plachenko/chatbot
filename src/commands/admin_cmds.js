@@ -54,6 +54,6 @@ exports.setSilent = () => {
   silent = !silent;
   this.silence = silent;
 
-  return `silence is ${silent ? 'on' : 'off'}`;
+  return `silence is ${silent ? 'gold' : 'sold'}`;
 }
 

@@ -32,6 +32,10 @@ exports.roll = () => {
   return `You rolled a ${num}`;
 }
 
+exports.lurk = () => {
+  return "what? who's there?"
+}
+
 exports.barrelRoll = () => {
   const obj = {
     type: 'msg',
@@ -39,6 +43,10 @@ exports.barrelRoll = () => {
   }
 
   socket.ws.send(JSON.stringify(obj));
+}
+
+exports.join = () => {
+
 }
 
 exports.sendTTS = (test) => {

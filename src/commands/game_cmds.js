@@ -3,7 +3,6 @@ const ws = require('../websocket');
 // ws.connectWS();
 
 let murking = false;
-
 let guessNum = ~~(Math.random()*7);
 let guessTry = 0;
 
@@ -32,12 +31,21 @@ exports.changeRadio = (itr) => {
   return `changed radio`;
 }
 
+exports.break = (num) => {
+  console.log('breaking...', num);
+}
+
+exports.accelerate = (num) => {
+  console.log('accelerating', num);
+}
+
 exports.jack = (guess) => {
+  /*
   robo.keyToggle('F', 'down');
   setTimeout(()=> {
     robo.keyToggle('F', 'up');
   }, 1000);
-  /*
+  */
   if(!guess[0]) guess[0] = ~~(Math.random()*7);
 
   if(guess[0] == guessNum){
@@ -58,7 +66,6 @@ exports.jack = (guess) => {
       return `Jacking failed. Resetting guesses.`;
     }
   }
-  */
 }
 
 let working = false;

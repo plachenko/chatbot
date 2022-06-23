@@ -12,6 +12,7 @@ const bot = require('./bot');
 
 const video = require('./_bak/video');
 
+
 const wss = new WebSocketServer({
 	port: 6979,
 });
@@ -58,7 +59,7 @@ const interval = setInterval(function ping() {
 }, 30000);
 
 wss.on('connection', (ws, req) => {
-	let obs = req.url.slice(1) == 'true';
+	let obs = req.url.slice(1) == 'obs';
 
 	wsClients.push({id: req.headers['sec-websocket-key'], client: ws, obs: obs});
 

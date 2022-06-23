@@ -7,8 +7,11 @@ const io = require('./commands/io_cmds');
 const usr = require('./commands/usr_cmds');
 const game = require('./commands/game_cmds');
 
+const aud = require('./commands/audio_cmds');
+
 const cmdArr = [];
 const reserved = [];
+const gameCmds = ['!honk', '!bang'];
 const commands = {};
 
 const ws = require('./websocket');
@@ -16,17 +19,23 @@ ws.connectWS();
 
 // General chat commands
 commands['chatCmds'] = {
+  'test': aud.test,
+  'lurk': gen.lurk,
   'so': api.shoutout,
-  'a': gen.roll,
   'c': gen.showCommands,
   'h': gen.showHelp,
   'discord': gen.showDiscord,
   'addcmd': gen.addCmd,
   'tts': gen.sendTTS,
   'barrelRoll': gen.barrelRoll,
-  'broke': gen.showBroke
-};
+  'join': gen.join
+}
 
+commands['audioCmds'] = {
+  'aud': aud.sendAudioChan
+}
+
+/* TODO: Split these commands out-- these should be set to 'global aliases' */
 commands['gameCmds'] = {
   'radio': game.changeRadio,
   'jack': game.jack,
@@ -46,13 +55,15 @@ commands['usrCmds'] = {
   '!': usr.last,
   '*': usr.favorite,
   'mute': usr.toggleMute
-};
+}
 
 // Admin specific commands
 commands['adminCmds'] = {
   'priv': admin.setPrivlages,
-  'silent': admin.setSilent
-};
+  'silent': admin.setSilent,
+  'audStart': aud.startPulse,
+  'audStop': aud.stopPulse
+}
 
 // I/O Commands to add, remove, edit or (un)list
 commands['ioCmds'] = {
@@ -60,7 +71,7 @@ commands['ioCmds'] = {
   'rem': io.removeCmd,
   'edit': io.editCmd,
   'list': io.toggleListed
-};
+}
 
 // Create a reserved commmand array
 for(c in commands){
@@ -69,27 +80,40 @@ for(c in commands){
   }
 }
 
+// Create a game commmand array (FOR GTA GAMES)
+for(c in commands['gameCmds']){
+  gameCmds.push('!'+c);
+}
+
 exports.start = () => {
-  user.getUsers();
+  // user.getUsers();
 }
 
 exports.end = () => {
-  user.setUsers();
+  // user.setUsers();
 }
 
 exports.raidEvt = async (usr) => {
   // const evt = users[usrIdx].events.raid;
-  return await api.shoutout(usr.username);
+  return await api.shoutout(usr);
+}
+
+exports.hostEvt = async (usr) => {
+  return `${usr} is now hosting! Thank you!`;
 }
 
 exports.cmd = async (msg, usr, cmd, args) => {
-  user.check(usr.username);
+  // user.check(usr.username);
 
   if(!admin && admin.silence) return;
   if(!msg.startsWith(gen.commandTrigger)) return;
 
   // const usrIdx = checkUser(usr.username);
-  const privUsr = (usr.admin || usr.mod);
+  const privUsr = (usr.admin || usr.mod || usr.badges?.vip == '1');
+
+  if(cmd == 'gtacmds'){
+    return `GTA commands: ${gameCmds.join(' ')}`;
+  }
 
   // honk.
   if((/(h[o]{1,}nk)/g).test(cmd)){
@@ -115,6 +139,10 @@ exports.cmd = async (msg, usr, cmd, args) => {
 
         const validCmd = !(reserved.indexOf(args[0]) > -1) && (/^\w+$/).test(args[0]);
         if(!validCmd) return 'invalid or reserved command name.';
+
+      // If shoutout without argument, shout yourself out.
+      if((cmd == 'so' || cmd == 'info') && !args.length){
+        args = usr['display-name'];
       }
 
       return await commands[c][cmd](args);
@@ -122,4 +150,5 @@ exports.cmd = async (msg, usr, cmd, args) => {
   }
 
   // Otherwise play meme commands
+  }
 }

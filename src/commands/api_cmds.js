@@ -9,6 +9,14 @@ const twitch_instance = axios.create({
 });
 /* --- */
 
+exports.info = async (userName) => {
+  const usrInfo = await getUserId(userName);
+  const usrStreamData = await getStreamInfo(usrInfo?.id);
+
+
+  return usrStreamData;
+}
+
 exports.shoutout = async (userName) => {
   const usrInfo = await getUserId(userName);
   const usrChannelData = await getUsrInfo(usrInfo?.id);
@@ -30,8 +38,31 @@ async function getUserId(user){
   });
 }
 
+async function getStreamInfo(usrId){
+  const endPoint = `/streams?user_id=${usrId}`;
+  console.log(endPoint);
+  return await twitch_instance.get(endPoint).then(d => {
+    const data = d.data.data[0];
+
+    return data;
+  }).catch(err => {
+    return false;
+  });
+}
+
 async function getUsrInfo(usrId){
   const endPoint = `/channels?broadcaster_id=${usrId}`;
+  return await twitch_instance.get(endPoint).then(d => {
+    const data = d.data.data[0];
+
+    return data;
+  }).catch(err => {
+    return false;
+  });
+}
+
+async function getLastFollow(usrId){
+  const endPoint = `users/follows?first=1&to_id=${usrId}`;
   return await twitch_instance.get(endPoint).then(d => {
     const data = d.data.data[0];
 
