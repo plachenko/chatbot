@@ -7,12 +7,24 @@ obs.connect({address: 'localhost:4444'}).then(() => {
 });
 */
 
+
 // const socket = require('../websocket');
+
+const OSC = require('node-osc');
+const Client = OSC.Client;
+
+const Bundle = OSC.Bundle;
+const client = new Client('192.168.1.23', 3333);
 
 let lastRolls = [];
 
 const cmdTrigger = "!";
 exports.commandTrigger = cmdTrigger;
+
+exports.throw = () => {
+  // const bundle = new Bundle([sendChan, sendVal]);
+  client.send('/throw', 1);
+}
 
 /* -- General Chat Commands -- */
 exports.roll = () => {

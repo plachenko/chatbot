@@ -1,7 +1,7 @@
 const OSC = require('node-osc');
 const Client = OSC.Client;
 const Bundle = OSC.Bundle;
-const client = new Client('0.0.0.0', 7001);
+const client = new Client('192.168.1.23', 7001);
 
 const api = require('./api_cmds');
 

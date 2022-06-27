@@ -19,6 +19,7 @@ ws.connectWS();
 
 // General chat commands
 commands['chatCmds'] = {
+  'throw': gen.throw,
   'test': aud.test,
   'lurk': gen.lurk,
   'so': api.shoutout,
@@ -121,6 +122,7 @@ exports.cmd = async (msg, usr, cmd, args) => {
     return await game.sendHonk(honks);
   }
 
+
   // bang!
   if((/(b[a]{1,}ng)/g).test(cmd)){
     let bangs = cmd.match(/([a]{1,})/g);
@@ -139,6 +141,7 @@ exports.cmd = async (msg, usr, cmd, args) => {
 
         const validCmd = !(reserved.indexOf(args[0]) > -1) && (/^\w+$/).test(args[0]);
         if(!validCmd) return 'invalid or reserved command name.';
+      }
 
       // If shoutout without argument, shout yourself out.
       if((cmd == 'so' || cmd == 'info') && !args.length){
@@ -150,5 +153,4 @@ exports.cmd = async (msg, usr, cmd, args) => {
   }
 
   // Otherwise play meme commands
-  }
 }
