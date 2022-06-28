@@ -19,8 +19,6 @@ ws.connectWS();
 
 // General chat commands
 commands['chatCmds'] = {
-  'throw': gen.throw,
-  'test': aud.test,
   'lurk': gen.lurk,
   'so': api.shoutout,
   'c': gen.showCommands,
@@ -30,6 +28,11 @@ commands['chatCmds'] = {
   'tts': gen.sendTTS,
   'barrelRoll': gen.barrelRoll,
   'join': gen.join
+}
+
+commands['unreal'] = {
+  'throw': gen.throw,
+  'shotgun': gen.shotgun
 }
 
 commands['audioCmds'] = {
@@ -63,7 +66,8 @@ commands['adminCmds'] = {
   'priv': admin.setPrivlages,
   'silent': admin.setSilent,
   'audStart': aud.startPulse,
-  'audStop': aud.stopPulse
+  'audStop': aud.stopPulse,
+  'show': gen.showClip
 }
 
 // I/O Commands to add, remove, edit or (un)list
@@ -121,7 +125,6 @@ exports.cmd = async (msg, usr, cmd, args) => {
     let honks = cmd.match(/([o]{1,})/g);
     return await game.sendHonk(honks);
   }
-
 
   // bang!
   if((/(b[a]{1,}ng)/g).test(cmd)){

@@ -10,6 +10,8 @@ obs.connect({address: 'localhost:4444'}).then(() => {
 
 // const socket = require('../websocket');
 
+const api = require('./api_cmds');
+
 const OSC = require('node-osc');
 const Client = OSC.Client;
 
@@ -22,8 +24,14 @@ const cmdTrigger = "!";
 exports.commandTrigger = cmdTrigger;
 
 exports.throw = () => {
-  // const bundle = new Bundle([sendChan, sendVal]);
   client.send('/throw', 1);
+}
+
+exports.showClip = () => {
+  console.log('test');
+  console.log(api);
+  console.log(api.lastClipURL);
+  // client.send('/clipURL', clipURL);
 }
 
 /* -- General Chat Commands -- */
@@ -44,6 +52,10 @@ exports.roll = () => {
   return `You rolled a ${num}`;
 }
 
+exports.shotgun = () => {
+  client.send('/shotgun', 1);
+}
+
 exports.lurk = () => {
   return "what? who's there?"
 }
@@ -55,10 +67,6 @@ exports.barrelRoll = () => {
   }
 
   socket.ws.send(JSON.stringify(obj));
-}
-
-exports.join = () => {
-
 }
 
 exports.sendTTS = (test) => {

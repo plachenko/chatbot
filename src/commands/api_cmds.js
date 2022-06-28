@@ -7,12 +7,21 @@ const twitch_instance = axios.create({
         'Client-Id': process.env.TWITCH_CLIENT_ID
     }
 });
+
+exports.lastClipURL;
+
+const date = new Date();
+const dateStr = date.toISOString();
+
+const lastDate = new Date();
+lastDate.setDate(1);
+lastDate.setMonth(date.getMonth()-2);
+const lastDateStr = lastDate.toISOString();
 /* --- */
 
 exports.info = async (userName) => {
   const usrInfo = await getUserId(userName);
   const usrStreamData = await getStreamInfo(usrInfo?.id);
-
 
   return usrStreamData;
 }
@@ -20,11 +29,16 @@ exports.info = async (userName) => {
 exports.shoutout = async (userName) => {
   const usrInfo = await getUserId(userName);
   const usrChannelData = await getUsrInfo(usrInfo?.id);
-  const {game_name, title} = usrChannelData;
+  const {game_name, title, game_id} = usrChannelData;
+
+  const clipURL = await getStreamClip(usrInfo?.id, game_id);
+
+
+  lastClipURL = clipURL;
 
   if(!usrInfo || !usrChannelData) return `No stream found.`;
 
-  return `${userName} (https://www.twitch.tv/${userName}) was last streaming ${game_name} - "${title}"`
+  return `${userName} (https://www.twitch.tv/${userName}) was last streaming ${game_name} - "${title}" ${clipURL || ''}`
 }
 
 async function getUserId(user){
@@ -38,9 +52,28 @@ async function getUserId(user){
   });
 }
 
+async function getStreamClip(usrId, gameId = null){
+  const endPoint = `/clips?broadcaster_id=${usrId}&started_at=${lastDateStr}&ended_at=${dateStr}`
+  return await twitch_instance.get(endPoint).then(d => {
+    const data = d.data.data;
+    let lastGameArr = data.filter(e => e.game_id == gameId);
+    let clip;
+    console.log(lastGameArr);
+    
+    if(lastGameArr.length){
+      clip = lastGameArr.sort((a, b) =>  b.view_count - a.view_count);
+    } else {
+      clip = d.data.data.sort((a, b) =>  b.view_count - a.view_count);
+    }
+
+    return clip[0].url;
+  }).catch(err => {
+    return false;
+  });
+}
+
 async function getStreamInfo(usrId){
   const endPoint = `/streams?user_id=${usrId}`;
-  console.log(endPoint);
   return await twitch_instance.get(endPoint).then(d => {
     const data = d.data.data[0];
 
