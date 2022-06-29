@@ -15,6 +15,7 @@ const gameCmds = ['!honk', '!bang'];
 const commands = {};
 
 const ws = require('./websocket');
+const { client } = require('tmi.js');
 ws.connectWS();
 
 // General chat commands
@@ -67,7 +68,6 @@ commands['adminCmds'] = {
   'silent': admin.setSilent,
   'audStart': aud.startPulse,
   'audStop': aud.stopPulse,
-  'show': gen.showClip
 }
 
 // I/O Commands to add, remove, edit or (un)list
@@ -75,7 +75,8 @@ commands['ioCmds'] = {
   'add': io.addCmd,
   'rem': io.removeCmd,
   'edit': io.editCmd,
-  'list': io.toggleListed
+  'list': io.toggleListed,
+  'show': gen.showClip
 }
 
 // Create a reserved commmand array
@@ -107,7 +108,7 @@ exports.hostEvt = async (usr) => {
   return `${usr} is now hosting! Thank you!`;
 }
 
-exports.cmd = async (msg, usr, cmd, args) => {
+exports.cmd = async (msg, usr, cmd, args, chan, bot) => {
   // user.check(usr.username);
 
   if(!admin && admin.silence) return;
@@ -132,6 +133,12 @@ exports.cmd = async (msg, usr, cmd, args) => {
     return await game.banging(bangs);
   }
 
+  if(cmd == 'throw' && (usr.mod || usr.admin) && args[0] == 'chat'){
+    setTimeout(() => {
+      bot.clear(chan)
+    }, 2000);
+  }
+
   // Check the reserved commands.
   for(c in commands){
     if(commands[c][cmd]){
@@ -147,7 +154,7 @@ exports.cmd = async (msg, usr, cmd, args) => {
       }
 
       // If shoutout without argument, shout yourself out.
-      if((cmd == 'so' || cmd == 'info') && !args.length){
+      if((cmd == 'so') && !args.length){
         args = usr['display-name'];
       }
 

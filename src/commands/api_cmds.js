@@ -33,12 +33,11 @@ exports.shoutout = async (userName) => {
 
   const clipURL = await getStreamClip(usrInfo?.id, game_id);
 
-
-  lastClipURL = clipURL;
+  this.lastClipURL = clipURL.embed;
 
   if(!usrInfo || !usrChannelData) return `No stream found.`;
 
-  return `${userName} (https://www.twitch.tv/${userName}) was last streaming ${game_name} - "${title}" ${clipURL || ''}`
+  return `${userName} (https://www.twitch.tv/${userName}) was last streaming ${game_name} - "${title}" ${clipURL.url || ''}`
 }
 
 async function getUserId(user){
@@ -58,7 +57,7 @@ async function getStreamClip(usrId, gameId = null){
     const data = d.data.data;
     let lastGameArr = data.filter(e => e.game_id == gameId);
     let clip;
-    console.log(lastGameArr);
+
     
     if(lastGameArr.length){
       clip = lastGameArr.sort((a, b) =>  b.view_count - a.view_count);
@@ -66,7 +65,11 @@ async function getStreamClip(usrId, gameId = null){
       clip = d.data.data.sort((a, b) =>  b.view_count - a.view_count);
     }
 
-    return clip[0].url;
+    // THANK YOU 4aiman!! (https://twitch.tv/4aiman)
+    let turl = clip[0].thumbnail_url;
+    turl = turl.slice(0, turl.length-20)+'.mp4';
+
+    return {url: clip[0].url, embed: turl};
   }).catch(err => {
     return false;
   });

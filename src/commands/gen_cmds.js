@@ -16,7 +16,8 @@ const OSC = require('node-osc');
 const Client = OSC.Client;
 
 const Bundle = OSC.Bundle;
-const client = new Client('192.168.1.23', 3333);
+const locClient = new Client('0.0.0.0', 3333);
+const client = new Client('192.168.1.5', 3333);
 
 let lastRolls = [];
 
@@ -28,10 +29,8 @@ exports.throw = () => {
 }
 
 exports.showClip = () => {
-  console.log('test');
-  console.log(api);
-  console.log(api.lastClipURL);
-  // client.send('/clipURL', clipURL);
+  if(!api.lastClipURL) return `No Clip!`;
+  locClient.send('/showClip', api.lastClipURL);
 }
 
 /* -- General Chat Commands -- */

@@ -54,7 +54,7 @@ async function onMessageHandler (channel, user, msg, self) {
   // Remove whitespace from chat message
   const args = msg.slice(1).split(' ');
   const cmd = args.shift().toLowerCase().trim();
-  const output = await bot.cmd(msg, user, cmd, args);
+  const output = await bot.cmd(msg, user, cmd, args, channel, client);
 
   if(output){
     client.say(channel, output);
