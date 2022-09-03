@@ -6,26 +6,290 @@ obs.connect({address: 'localhost:4444'}).then(() => {
   connected = true;
 });
 */
+const projObj = require('../projects');
+const process = require('process');
 
+const  ytsearch = require('youtube-search');
+const opts = {
+  maxResults: 10,
+  key: process.env.YTAPIKEY
+}
 
-// const socket = require('../websocket');
+let screenDim = {
+  x: 1920,
+  y: 1200
+}
+
+const vidList = [];
+let videoQueue = [];
+
+let vidReturn = false;
+
+const {google} = require('googleapis');
+
+const crypto = require('crypto');
+
+const {default: OBSWebSocket} = require('obs-websocket-js');
+const obs = new OBSWebSocket();
+obs.connect('ws://0.0.0.0:4445');
+
+const socket = require('../websocket');
+
+const sqlite3 = require('sqlite3');
+const db = new sqlite3.Database('chatbot.sqlite');
 
 const api = require('./api_cmds');
 
 const OSC = require('node-osc');
+const ws = require('../websocket');
 const Client = OSC.Client;
 
-const Bundle = OSC.Bundle;
-const locClient = new Client('0.0.0.0', 3333);
-const client = new Client('192.168.1.5', 3333);
+const locClient = new Client('0.0.0.0', 3332);
+const client = new Client('0.0.0.0', 3333);
 
 let lastRolls = [];
+
+let curProject = 'it';
 
 const cmdTrigger = "!";
 exports.commandTrigger = cmdTrigger;
 
+/*
+const hash = crypto.createHash('sha256');
+hash.on('readable', ()=>{
+  const data = hash.read();
+  if(data){
+    console.log(data.toString('hex').substring(4))
+  }
+})
+*/
+
+/*
+const cheerio = require('cheerio');
+const puppeteer = require('puppeteer');
+(async () => {
+
+  console.log('test');
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.goto('https://youtube.com/results?search_query=hello', {waitUntil: 'domcontentloaded'});
+  console.log();
+  let $ = cheerio.load(await page.content());
+  console.log($('.contents').children());
+
+  // await page.screenshot({path: 'example.png'});
+
+  await browser.close();
+})();
+
+*/
+
 exports.throw = () => {
-  client.send('/throw', 1);
+  locClient.send('/throw', '');
+  client.send('/throw', 'test');
+}
+
+function getCaptions(vID){
+  google.youtube('v3').captions.list({
+    key: process.env.YTAPIKEY,
+    part: 'id',
+    videoId: vID
+  }).then((res)=>{
+    const captionID = res.data.items[0].id;
+    console.log(captionID);
+    const captionURL = `https://youtube.googleapis.com/youtube/v3/captions/${captionID}?key=${process.env.YTAPIKEY}`;
+    fetch(captionURL, {
+      headers: new Headers({
+        'Authorization': 'Bearer '+process.env.YTOAUTH,
+        'Accept': 'application/json'
+      })
+    }).then((res)=>{
+      return res.json();
+    }).then((data) => {
+      console.log(data);
+    });
+    /*
+    google.youtube('v3').captions.download({
+      key: process.env.YTAPIKEY,
+      id: captionID
+    }).then((e) => {
+      console.log(e);
+    });
+    */
+  });
+}
+
+function checkYoutubeAPI(args, keepList = false){
+  let urlID;
+  return google.youtube('v3').search.list({
+    key: process.env.YTAPIKEY,
+    part: 'snippet',
+    q: args
+  }).then((res) => {
+    // console.log(res.data.items);
+    const ytlist = res.data.items;
+    
+    urlID = ytlist.find((el) => {
+      return el.id.kind == 'youtube#video';
+    });
+    
+    addBrowserItem(urlID.id.videoId);
+
+    // getCaptions(urlID.id.videoId);
+
+    return urlID.id.videoId;
+
+  }).catch((err) => console.log(err));
+}
+
+function sendWS(MsgType, payload){
+  const obj = {
+    type: MsgType,
+    payload: {
+      id: payload,
+    }
+  }
+  socket.ws.send(JSON.stringify(obj));
+}
+
+exports.dimCheck = function(){
+  getDimensions();
+}
+
+exports.clearVids = (args) => {
+  const num = args[0];
+  getMemeSceneItems(num);
+}
+
+async function getMemeSceneItems(num){
+  const itemList = await obs.call('GetSceneItemList', {
+    sceneName: 'videos',
+  });
+  
+  const list = itemList.sceneItems.filter((el) => el.sourceName.substring(0, 4) == 'meme' && el.sourceName.length > 5);
+  
+  if(!list.length) return;
+
+  list.forEach((el, idx) =>{
+    if(idx < list.length - num) return;
+    obs.call('RemoveSceneItem', {sceneName: 'videos', sceneItemId: el.sceneItemId});
+  });
+  videoQueue = num ? list.slice(list.length-num) : [];
+}
+
+async function getDimensions(){
+  const settings = await obs.call('GetVideoSettings');
+  screenDim.x = settings.baseWidth;
+  screenDim.y = settings.baseHeight;
+}
+
+exports.penis = () => {
+  let lngt = ~~(Math.random()*71);
+  return `8=${'='.repeat(lngt)}D wow ${lngt} long!`;
+}
+
+function addBrowserItem(urlID){
+  const hash = crypto.createHash('md5').update(urlID+Math.random()).digest('hex').substring(0, 5);
+  let srcname = `meme${hash}`;
+
+  const scaleNum = 10;
+  
+  obs.call('CreateInput', {
+    sceneName: 'videos', 
+    inputName: srcname,
+    inputKind: 'browser_source',
+    // sceneItemEnabled: false,
+    inputSettings: {
+      // reroute_audio: true,
+      width: (screenDim.x / scaleNum)  + screenDim.x,
+      height: (screenDim.y / scaleNum) + screenDim.y - 15,
+      shutdown: true,
+      url: `http://${process.env.FRONTEND_URL}:${process.env.FRONTEND_PORT}?id=${urlID}`
+    }
+  }).then((e) => {
+    obs.call('SetSceneItemTransform', {
+      sceneName: 'videos',
+      sceneItemId: e.sceneItemId,
+      sceneItemTransform: {
+        positionX: -96,
+        positionY: -54
+      }
+    })
+    obs.call('CreateSourceFilter', {
+      sourceName: srcname,
+      filterName: 'Chroma Key',
+      filterKind: 'chroma_key_filter_v2'
+    });
+  });
+
+  // Send urlID to the websocket connection to be injested by browser
+  sendWS(urlID);
+}
+
+const ytRegex = /(.*?)(^|\/|v=)([a-z0-9_-]{11})(.*)?/im;
+// let randVid = false;
+exports.yt = async (args) => {
+  
+  if(vidList.length){
+    // console.log(vidList);
+    // return;
+  }
+
+  // Check if there are arguments and they're well formed
+  if(!args.length) {
+    // randVid = true;
+    let words = [
+      'ice',
+      'know',
+      'mastermind',
+      'ivory',
+      'freckle',
+      'extract',
+      'conglomerate',
+      'self',
+      'tent',
+      'lost',
+      'mutation',
+      'health',
+      'agile',
+      'make',
+      'noise',
+      'feeling',
+      'parallel',
+      'decay',
+      'heaven',
+      'investment',
+      'tribute',
+      'forge',
+      'cottage',
+      'echo',
+      'plain',
+      'fragrant',
+      'steward',
+      'ceremony',
+      'drain',
+      'diamond'
+    ];
+
+    for(let i = 0; i <= Math.floor(Math.random() * 4) ; i++){
+      args.push(words[Math.floor(Math.random() * (words.length-1))]);
+    }
+  }
+
+  // if search string or if the yt id regex doesn't hit
+  if(args.length > 1 || !ytRegex.test(args[0])){
+    // if a generalized string, use the youtube search api
+    const vidID = await checkYoutubeAPI(args.join(' '));
+    if(!vidReturn) return;
+    return `playing https://www.youtube.com/watch?v=${vidID}`;
+  } else {
+    // add the browser item with the youtube id directly.
+    addBrowserItem(args[0]);
+  }
+}
+
+exports.cohost = () => {
+  return `Cohost is ${cohost} go check them out!`;
 }
 
 exports.showClip = () => {
@@ -40,7 +304,7 @@ exports.roll = () => {
   let num = ~~(Math.random() * n);
   while (lastRolls.includes(num)) num = ~~(Math.random() * n);
 
-  lastRolls.push(num)
+  lastRolls.push(num);
   lastRolls = lastRolls.slice(maxRand * -1);
 
   // const num = lastRolls[lastRolls.length - 1];
@@ -51,8 +315,42 @@ exports.roll = () => {
   return `You rolled a ${num}`;
 }
 
+function setProject(name){
+  // console.log(name);
+  curProject = name.title;
+}
+
+exports.project = () => {
+  projObj.getProject(setProject);
+
+  return `working on ${curProject}!`;
+};
+
+exports.peepoLeave = () => {
+  obs.call('SetSceneItemEnabled', {
+    sceneName: 'ComputerRoom',
+    sceneItemId: 12,
+    sceneItemEnabled: true
+  });
+}
+
+exports.setProjectTitle = (project = null) => {
+  if(!project) return;
+  
+  projObj.addProject(project);
+
+  curProject = project;
+  return `setting project to ${curProject}!`;
+}
+
+exports.cans = () => {
+  // console.log('knocking.');
+  client.send('/knockCans', 1);
+}
+
 exports.shotgun = () => {
-  client.send('/shotgun', 1);
+  locClient.send('/throw', 'shotgun');
+  client.send('/throw', 'shotgun');
 }
 
 exports.lurk = () => {
@@ -127,4 +425,3 @@ exports.showCommands = (args = []) => {
 
   return ret;
 }
-

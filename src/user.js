@@ -68,7 +68,7 @@ for(let i = 0; i < 4; ++i){
 exports.setUsers = () => {
   console.log('writing to database');
 
-  let stmt =  db.prepare("INSERT INTO lorem VALUES (?, ?)");
+  let stmt =  db.prepare("INSERT INTO lorem VALUES (NULL, ?, ?)");
   objs.forEach(el => {
 
     let vals = []
@@ -78,7 +78,6 @@ exports.setUsers = () => {
     console.log(vals)
     stmt.run(vals);
   });
-
 
   /*
   const sql = `INSERT INTO users VALUES (${placeholders})`;

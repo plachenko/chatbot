@@ -23,7 +23,17 @@ exports.info = async (userName) => {
   const usrInfo = await getUserId(userName);
   const usrStreamData = await getStreamInfo(usrInfo?.id);
 
+  console.log(usrStreamData, userName);
+
   return usrStreamData;
+}
+
+exports.getChatList = async () => {
+  return axios.get('https://tmi.twitch.tv/group/user/plnrnd/chatters').then((e) => {
+    return e.data.chatters.viewers;
+  }).catch((err) => {
+    console.log(err);
+  });
 }
 
 exports.shoutout = async (userName) => {

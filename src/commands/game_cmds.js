@@ -6,6 +6,8 @@ let murking = false;
 let guessNum = ~~(Math.random()*7);
 let guessTry = 0;
 
+robo.setKeyboardDelay(1);
+
 exports.murk = () => {
   if(murking) return;
 
@@ -48,7 +50,7 @@ exports.jack = (guess) => {
   */
   if(!guess[0]) guess[0] = ~~(Math.random()*7);
 
-  if(guess[0] == guessNum){
+  if(Number(guess[0]) == guessNum){
     robo.keyTap('f');
     guessNum = ~~(Math.random()*7);
     guessTry = 0;
@@ -63,7 +65,7 @@ exports.jack = (guess) => {
       guessNum = ~~(Math.random()*7);
       guessTry = 0;
 
-      return `Jacking failed. Resetting guesses.`;
+      return `Jacking failed. Number was ${guessNum} Resetting guesses.`;
     }
   }
 }
@@ -74,6 +76,22 @@ exports.work = () => {
   working = !working;
   if(working) return `clocking in!`;
   return `clocking out!`;
+}
+
+exports.sendfbi = () => {
+  console.log('sending.');
+  robo.typeString('BRINGITON');
+}
+
+exports.sendBoom = () => {
+  const max = 30;
+  const limit = 10;
+  const ranNum = Math.floor(Math.random()*max);
+
+  if(ranNum < limit){
+    robo.typeString('allcarsgoboom');
+    return 'boop.'
+  }
 }
 
 exports.sendHonk = (honks) => {

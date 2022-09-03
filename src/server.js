@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const fs = require('fs');
 const WebSocketServer = WebSocket.WebSocketServer;
 const { Readable } = require('stream');
-
+const OSCServer = require('node-osc').Server;
 const game = require('./commands/game_cmds');
 
 // const io = require('./io_bak');
@@ -12,6 +12,13 @@ const bot = require('./bot');
 
 const video = require('./_bak/video');
 
+const oscServ = new OSCServer(3334, '0.0.0.0', () => {
+	// console.log('started');
+});
+
+oscServ.on('message', (e)=>{
+	// console.log(e);
+});
 
 const wss = new WebSocketServer({
 	port: 6979,
@@ -34,7 +41,6 @@ async function saveVideo(_blob){
   // const blob = _blob;
 
   // const arrayBuffer = await blob.arrayBuffer();
-  console.log(_blob.buffer);
   const array = new Uint8Array(_blob.buffer);
   const readStream = bufferToStream(array);
   readStream.pipe(writeStream);
@@ -77,32 +83,33 @@ wss.on('connection', (ws, req) => {
 		*/
 	}
 
+	// on a websocket message...
 	ws.on('message', (data, isBinary)=>{
-    const obj = data;
-    // console.log(isBinary);
-    // console.log(obj);
-    // saveVideo(obj);
-    // return;
+		
+		// Parse the data
 		const objParse = JSON.parse(data.toString());
+		// console.log(objParse);
 
-    if(objParse.type == 'honk'){
-      const honking = objParse.payload;
-      if(honking){
-        game.starthonk();
-      } else {
-        game.endHonk();
-      }
-    }
+		// Check for HONK command
+		if(objParse.type == 'honk'){
+			const honking = objParse.payload;
+			if(honking){
+				game.starthonk();
+			} else {
+				game.endHonk();
+			}
+		}
 
-    if(objParse.type == 'counter'){
-      // audio.play('america');
-    }
+		// Check for COUNTER command for death counter.
+		if(objParse.type == 'counter'){
+		// audio.play('america');
+		}
 
-		if(obj.type == 'cmd'){
+		if(objParse.type == 'cmd'){
 			const cmd = obj.payload;
-      if(cmd == 'saveVid'){
-        // saveVideo();
-      }
+			if(cmd == 'saveVid'){
+				// saveVideo();
+			}
 
 			if(cmd == 'sendVid'){
 				video.sendVid();
@@ -117,10 +124,11 @@ wss.on('connection', (ws, req) => {
 		}
 
 		wss.clients.forEach((client)=>{
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(data, { binary: isBinary });
-      }
+			if (client.readyState === WebSocket.OPEN) {
+				client.send(data, { binary: isBinary });
+			}
 		});
+
 	});
 });
 

@@ -4,26 +4,32 @@
   "description": "Twitch chatbot that parses, clips and plays audio and video commands.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "server": "nodemon ./src/server.js",
+    "start": "nodemon --no-warnings index.js",
+    "server": "http-server UI",
     "all": "concurrently --kill-others \"npm run start\" \"npm run server\""
   },
   "dependencies": {
     "@suldashi/lame": "^1.2.5",
     "axios": "^0.24.0",
+    "cheerio": "^1.0.0-rc.12",
     "dotenv": "^10.0.0",
     "ffmpeg-static": "^4.4.0",
+    "googleapis": "^105.0.0",
     "node-osc": "^7.0.0",
     "node-window-manager": "^2.2.4",
-    "obs-websocket-js": "^4.0.3",
+    "obs-websocket-js": "^5.0.0",
     "pcm-volume": "^1.0.0",
+    "pupeteer": "^0.0.1",
+    "puppeteer": "^16.1.0",
     "robotjs": "^0.6.0",
     "sentiment-analysis": "^0.1.2",
     "speaker": "^0.5.3",
     "sqlite3": "^5.0.2",
     "stream-throttle": "^0.1.3",
-    "tmi.js": "^1.2.1",
-    "ws": "^8.2.3"
+    "tmi.js": "^1.8.5",
+    "ws": "^8.2.3",
+    "youtube-search": "^1.1.6",
+    "youtube-search-without-api-key": "^1.0.7"
   },
   "engines": {
     "node": "8.x"

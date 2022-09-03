@@ -18,17 +18,22 @@ const ws = require('./websocket');
 const { client } = require('tmi.js');
 ws.connectWS();
 
+
 // General chat commands
 commands['chatCmds'] = {
   'lurk': gen.lurk,
+  'project': gen.project,
   'so': api.shoutout,
   'c': gen.showCommands,
+  'roll': gen.roll,
   'h': gen.showHelp,
   'discord': gen.showDiscord,
   'addcmd': gen.addCmd,
   'tts': gen.sendTTS,
   'barrelRoll': gen.barrelRoll,
-  'join': gen.join
+  'join': gen.join,
+  'yt': gen.yt,
+  'penis': gen.penis
 }
 
 commands['unreal'] = {
@@ -68,6 +73,7 @@ commands['adminCmds'] = {
   'silent': admin.setSilent,
   'audStart': aud.startPulse,
   'audStop': aud.stopPulse,
+  'clear': gen.clearVids
 }
 
 // I/O Commands to add, remove, edit or (un)list
@@ -91,8 +97,11 @@ for(c in commands['gameCmds']){
   gameCmds.push('!'+c);
 }
 
+//On Bot Start
 exports.start = () => {
-  // user.getUsers();
+  // Read and load
+  // Check Screen dimensions of the connected obs 
+  gen.dimCheck();
 }
 
 exports.end = () => {
@@ -108,14 +117,77 @@ exports.hostEvt = async (usr) => {
   return `${usr} is now hosting! Thank you!`;
 }
 
+const ytRegx = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/;
+const idRegx = /youtu(?:.*\/v\/|.*v\=|\.be\/)([A-Za-z0-9_\-]{11})/;
+const imgRegx = /\/\/(\S+?(?:jpe?g|png|gif))/ig;
+const vidRegx = /\/\/(\S+?(?:mp4))/ig;
+
 exports.cmd = async (msg, usr, cmd, args, chan, bot) => {
   // user.check(usr.username);
+  // aud.sendMsg(msg);
+  const privUsr = (usr.admin || usr.mod || usr.badges?.vip == '1');
 
-  if(!admin && admin.silence) return;
-  if(!msg.startsWith(gen.commandTrigger)) return;
+  if(!privUsr && admin.silence) return;
+  // if(usr.username !== 'veryaery' && cmd == 'penis') return;
+
+  if(msg[0] == '^') {
+    // get user last message
+    // repeat last message with additional parameters
+    // store message as last
+  }
+
+  if(imgRegx.test(msg)){
+    console.log('img!');
+  }
+
+  if(vidRegx.test(msg)){
+    console.log('video!');
+  }
+
+  if(msg.search('peepoLeave') >= 0){
+    gen.peepoLeave();
+  }
 
   // const usrIdx = checkUser(usr.username);
-  const privUsr = (usr.admin || usr.mod || usr.badges?.vip == '1');
+
+  // Check Youtube link and privlaged user.
+  if(ytRegx.test(msg.split(' ')[0])){
+    
+    // check if well formed else return
+    if(!msg.split(' ')[0].match(idRegx)) return;
+    
+    // get video ID
+    const vidID = msg.split(' ')[0].match(idRegx)[1];
+
+    if(msg.indexOf('|') >= 0){
+      // console.log(msg.indexOf('|'));
+      const splitParams = msg.split('|');
+      splitParams.each(e => e.trim());
+      console.log(splitParams);
+    }
+
+    // play video.
+    gen.yt([vidID]);
+
+    return;
+  }
+
+  if(!msg.startsWith(gen.commandTrigger)) return;
+
+  if(cmd == 'cohost'){
+    api.shoutout(gen.cohost);
+    gen.cohost();
+  }
+
+  if(cmd == 'project' && privUsr){
+    if(args.length) gen.setProjectTitle(args.join(' '));
+  } 
+
+  if(cmd == 'info'){
+    // const chat = await api.getChatList();
+    // const chatter = await api.info(args[0]);
+    // console.log(chatter);
+  }
 
   if(cmd == 'gtacmds'){
     return `GTA commands: ${gameCmds.join(' ')}`;
@@ -130,7 +202,11 @@ exports.cmd = async (msg, usr, cmd, args, chan, bot) => {
   // bang!
   if((/(b[a]{1,}ng)/g).test(cmd)){
     let bangs = cmd.match(/([a]{1,})/g);
-    return await game.banging(bangs);
+    // return await game.banging(bangs);
+  }
+
+  if(cmd == 'cans'){
+    gen.cans();
   }
 
   if(cmd == 'throw' && (usr.mod || usr.admin) && args[0] == 'chat'){
@@ -143,7 +219,15 @@ exports.cmd = async (msg, usr, cmd, args, chan, bot) => {
   for(c in commands){
     if(commands[c][cmd]){
 
-      if(c == 'adminCmds' && !usr.admin) return;
+      if(c == 'gameCmds') return;
+      if(c == 'adminCmds' && !privUsr) return;
+
+      /*
+      if((cmd == 'project') && args.length){
+        if(!privUsr) return;
+        gen.project(args.join(' '));
+      }
+      */
 
       if(c == 'ioCmds') {
         // Check user privlage
@@ -164,3 +248,4 @@ exports.cmd = async (msg, usr, cmd, args, chan, bot) => {
 
   // Otherwise play meme commands
 }
+

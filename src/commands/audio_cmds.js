@@ -1,7 +1,7 @@
 const OSC = require('node-osc');
 const Client = OSC.Client;
 const Bundle = OSC.Bundle;
-const client = new Client('192.168.1.23', 7001);
+const client = new Client('0.0.0.0', 3331);
 
 const api = require('./api_cmds');
 
@@ -25,7 +25,7 @@ exports.startPulse = () => {
   let tickInt = 1000;
 
   // unmute audio
-  this.sendAudioChan(8, 1);
+  // this.sendAudioChan(8, 1);
 
   pulseInt = setInterval(() => {
     if(maxPulse <= 0) {
@@ -38,7 +38,6 @@ exports.startPulse = () => {
 
     // console.log(octaveVal)
 
-    this.sendAudioChan(1, octaveVal);
     maxPulse--;
   }, tickInt);
 }
@@ -63,7 +62,7 @@ exports.test = () => {
 }
 
 exports.sendMsg = (param) => {
-  let sendChan = '/ch/4';
+  let sendChan = '/clickdrum';
   let sendVal = param.split(' ').length || Math.random() * 10;
   // console.log(sendVal);
 
@@ -78,7 +77,7 @@ exports.sendMsg = (param) => {
 exports.sendAudioChan = (_sendChan = 1, _sendVal = 0) => {
   let sendChan = `/ch/${parseInt(_sendChan)}`;
   let sendVal = _sendVal || Math.round(Math.random() * 10);
-  const bundle = new Bundle([sendChan, sendVal]);
+  const bundle = new Bundle([sendChan, ...sendVal]);
 
   // console.log(bundle.elements[0].args)
   OSCsend(bundle);

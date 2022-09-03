@@ -5,6 +5,9 @@ const tmi = require('tmi.js');
 const bot = require('./src/bot');
 const aud = require('./src/commands/audio_cmds');
 const gen = require('./src/commands/gen_cmds');
+const wsServer = require('./src/server.js');
+
+
 
 const opts = {
     identity: {
@@ -17,6 +20,7 @@ const opts = {
 };
 
 // const channel = opts.channels[0];
+const botGreet = false;
 
 // Create a client with our options
 const client = new tmi.client(opts);
@@ -27,13 +31,19 @@ client.on('message', onMessageHandler);
 client.on('raided', onRaidHandler);
 client.on('hosted', onHostHandler);
 
-// Connect to Twitch:
+// Connect to Twitch:I 
 client.connect();
+
+// start websocket server
+// wsServer.init();
 
 // Called every time the bot connects to Twitch chat
 function onConnectedHandler (addr, port) {
     console.log(`* Connected to ${addr}:${port}`);
     bot.start();
+    if(!botGreet) return;
+
+    client.say(opts.channels[0], 'HeyGuys');
 }
 
 
