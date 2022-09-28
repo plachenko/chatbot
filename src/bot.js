@@ -33,7 +33,8 @@ commands['chatCmds'] = {
   'barrelRoll': gen.barrelRoll,
   'join': gen.join,
   'yt': gen.yt,
-  'penis': gen.penis
+  'penis': gen.penis,
+  'sd': api.sd
 }
 
 commands['unreal'] = {
@@ -73,7 +74,8 @@ commands['adminCmds'] = {
   'silent': admin.setSilent,
   'audStart': aud.startPulse,
   'audStop': aud.stopPulse,
-  'clear': gen.clearVids
+  'clear': gen.clearVids,
+  'clearSD': gen.clearSD
 }
 
 // I/O Commands to add, remove, edit or (un)list

@@ -161,19 +161,31 @@ exports.clearVids = (args) => {
   getMemeSceneItems(num);
 }
 
-async function getMemeSceneItems(num){
+exports.clearSD = (args) => {
+  const num = args[0];
+  getMemeSceneItems(num, 'stableD');
+}
+
+async function getMemeSceneItems(num, scene='videos'){
   const itemList = await obs.call('GetSceneItemList', {
-    sceneName: 'videos',
+    sceneName: scene,
   });
   
-  const list = itemList.sceneItems.filter((el) => el.sourceName.substring(0, 4) == 'meme' && el.sourceName.length > 5);
+  let list;
+  if(scene == 'videos'){
+    list = itemList.sceneItems.filter((el) => el.sourceName.substring(0, 4) == 'meme' && el.sourceName.length > 5);
+  } else {
+    list = itemList;
+  }
   
   if(!list.length) return;
 
   list.forEach((el, idx) =>{
     if(idx < list.length - num) return;
-    obs.call('RemoveSceneItem', {sceneName: 'videos', sceneItemId: el.sceneItemId});
+    obs.call('RemoveSceneItem', {sceneName: scene, sceneItemId: el.sceneItemId});
   });
+
+  if(scene != 'videos') return;
   videoQueue = num ? list.slice(list.length-num) : [];
 }
 

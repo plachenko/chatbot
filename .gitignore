@@ -1,6 +1,7 @@
 .env
 node_modules
 src/_bak/
+public/
 
 files/*/*
 !files/*/.gitkeep
